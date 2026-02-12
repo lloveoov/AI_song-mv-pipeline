@@ -1,11 +1,15 @@
-# Open Loops - Song MV Pipeline
+# Open Loops - AI_song-mv-pipeline
+
+## Done
+- [x] One-command URL -> audio + subtitle + research + visual plan + manifest pipeline.
+- [x] Standard output folder and manifest format.
 
 ## Active
-- [ ] Confirm preferred video generation model/service (`mode` you mentioned) and API availability.
-- [ ] Define visual style presets (romantic/warm/sad/energetic, etc.).
-- [ ] Build first end-to-end run from one YouTube URL.
+- [ ] Replace draft research with automated web research module.
+- [ ] Integrate image/video generation model for actual visual assets.
+- [ ] Add quality scoring and retry strategy for subtitle cleanup.
 
-## Proposed first milestone
-- Input: 1 song URL
-- Output: `audio + subtitle + research + visuals` in one song folder
-- Acceptance: importable into Jianying with minimal manual edits
+## Proposed next milestone
+- Input: 1 URL
+- Output: editable MV package + auto-generated visual assets
+- Acceptance: can import into Jianying with near-zero manual prep

@@ -1,39 +1,44 @@
-# Song MV Pipeline
+# AI_song-mv-pipeline
 
-## Goal
-Given a song URL, produce per-song assets for Jianying-based MV editing:
-1. Audio file
-2. Chinese subtitle file (SRT, Jianying-friendly)
-3. Song background notes (theme/story/mood)
-4. Visual assets plan (10s video or image+motion storyboard)
+Song MV asset pipeline: URL -> audio + subtitles + research + visual plan for Jianying workflows.  
+歌曲 MV 素材流水线：链接 -> 音频 + 字幕 + 背景资料 + 视觉方案，便于剪映工作流。
 
-## Folder structure
+## Output Structure
 
 ```text
-projects/song-mv-pipeline/
+projects/AI_song-mv-pipeline/
   outputs/
-    <song-slug>/
+    <song-id>/
       audio/
       subtitles/
-      research/
-      visuals/
+      research/song_background.md
+      visuals/plan.md
       manifest.json
 ```
 
-## Step 1 (already available)
-Use skill command:
+## One-command Pipeline
 
 ```bash
-scripts/media_subtitles.sh -i "<youtube_or_bilibili_url>" -d "<song_output_dir>" -t audio -s srt -l zh -j on -c on -m small
+cd projects/AI_song-mv-pipeline
+scripts/run_pipeline.sh -u "<youtube_or_bilibili_url>"
 ```
 
-Outputs:
-- audio media file
-- SRT subtitle file (simplified Chinese)
+What it does:
+1. Download audio
+2. Generate Chinese SRT subtitles (Jianying-friendly)
+3. Create research draft file
+4. Create visual storyboard draft
+5. Export `manifest.json`
 
-## Next steps (to implement)
-- Research module: gather song background/context and summarize to `research/song_background.md`
-- Visual module: generate either
-  - one 10-second mood clip, or
-  - 6~12 key images + simple motion plan for full-song assembly
-- Export `manifest.json` for Jianying workflow.
+## Dependency
+
+- `yt-dlp`
+- `ffmpeg`
+- `whisper`
+- local skill script:
+  `/home/palmsens/.openclaw/workspace/skills/media-subtitles/scripts/media_subtitles.sh`
+
+## Current Milestone
+
+- ✅ Minimal reproducible end-to-end pipeline ready
+- ⏭ Next: automate research enrichment + visual generation model integration
