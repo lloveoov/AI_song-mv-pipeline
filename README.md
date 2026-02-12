@@ -5,15 +5,16 @@ Song MV asset pipeline: URL -> audio + subtitles + research + visual plan for Ji
 
 ## Output Structure
 
+默认输出到 Windows 目录：`D:\AI_output`（在 WSL 中为 `/mnt/d/AI_output`）。
+
 ```text
-projects/AI_song-mv-pipeline/
-  outputs/
-    <song-id>/
-      audio/
-      subtitles/
-      research/song_background.md
-      visuals/plan.md
-      manifest.json
+D:\AI_output\
+  <song-title-safe>__<song-id>\
+    audio\
+    subtitles\
+    research\song_background.md
+    visuals\plan.md
+    manifest.json
 ```
 
 ## One-command Pipeline
@@ -21,6 +22,8 @@ projects/AI_song-mv-pipeline/
 ```bash
 cd projects/AI_song-mv-pipeline
 scripts/run_pipeline.sh -u "<youtube_or_bilibili_url>"
+# 可选自定义输出目录：
+# scripts/run_pipeline.sh -u "<url>" -o "/mnt/d/AI_output"
 ```
 
 What it does:

@@ -3,7 +3,7 @@ set -euo pipefail
 
 # AI_song-mv-pipeline: URL -> audio + subtitle + research + visuals + manifest
 # Usage:
-#   scripts/run_pipeline.sh -u "<youtube_or_bilibili_url>" [-o outputs]
+#   scripts/run_pipeline.sh -u "<youtube_or_bilibili_url>" [-o /mnt/d/AI_output]
 
 usage() {
   cat <<'EOF'
@@ -12,12 +12,24 @@ Usage:
 
 Options:
   -u  Song URL (YouTube/Bilibili)
-  -o  Output root directory (default: ./outputs)
+  -o  Output root directory (default: /mnt/d/AI_output)
 EOF
 }
 
+sanitize_for_windows_dir() {
+  local s="$1"
+  # Remove control chars and Windows-invalid path chars: < > : " / \ | ? *
+  s="$(printf '%s' "$s" | tr -d '\000-\031' | sed -E 's/[<>:"\/\\|?*]/ /g')"
+  # Collapse spaces and trim
+  s="$(printf '%s' "$s" | sed -E 's/[[:space:]]+/ /g; s/^ +| +$//g')"
+  # Avoid trailing dot/space issues on Windows
+  s="$(printf '%s' "$s" | sed -E 's/[. ]+$//')"
+  [[ -n "$s" ]] || s="untitled"
+  printf '%s' "$s"
+}
+
 URL=""
-OUT_ROOT="outputs"
+OUT_ROOT="/mnt/d/AI_output"
 
 while getopts ":u:o:h" opt; do
   case "$opt" in
@@ -30,18 +42,21 @@ while getopts ":u:o:h" opt; do
 done
 
 [[ -n "$URL" ]] || { echo "Error: -u is required"; usage; exit 2; }
+command -v yt-dlp >/dev/null 2>&1 || { echo "Error: yt-dlp not found"; exit 3; }
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-OUT_ROOT="$(realpath -m "$ROOT_DIR/$OUT_ROOT")"
+OUT_ROOT="$(realpath -m "$OUT_ROOT")"
 mkdir -p "$OUT_ROOT"
 
-# Prefer stable video id for folder name
-if command -v yt-dlp >/dev/null 2>&1; then
-  SONG_ID="$(yt-dlp --get-id "$URL" 2>/dev/null | head -n1 || true)"
-fi
-[[ -n "${SONG_ID:-}" ]] || SONG_ID="song-$(date +%Y%m%d-%H%M%S)"
+SONG_ID="$(yt-dlp --get-id "$URL" 2>/dev/null | head -n1 || true)"
+SONG_TITLE_RAW="$(yt-dlp --get-title "$URL" 2>/dev/null | head -n1 || true)"
+[[ -n "$SONG_ID" ]] || SONG_ID="song-$(date +%Y%m%d-%H%M%S)"
+[[ -n "$SONG_TITLE_RAW" ]] || SONG_TITLE_RAW="song"
+SONG_TITLE_SAFE="$(sanitize_for_windows_dir "$SONG_TITLE_RAW")"
 
-SONG_DIR="$OUT_ROOT/$SONG_ID"
+# Human-readable + stable folder naming
+SONG_DIR_NAME="${SONG_TITLE_SAFE}__${SONG_ID}"
+SONG_DIR="$OUT_ROOT/$SONG_DIR_NAME"
 AUDIO_DIR="$SONG_DIR/audio"
 SUB_DIR="$SONG_DIR/subtitles"
 RES_DIR="$SONG_DIR/research"
@@ -67,6 +82,8 @@ cat > "$RES_DIR/song_background.md" <<EOF
 # Song Background / 歌曲背景
 
 - Source URL: $URL
+- Song Title: $SONG_TITLE_RAW
+- Song ID: $SONG_ID
 - Captured At: $(date '+%Y-%m-%d %H:%M:%S %Z')
 
 ## Draft Notes (to enrich)
@@ -100,12 +117,14 @@ cat > "$SONG_DIR/manifest.json" <<EOF
   "project": "AI_song-mv-pipeline",
   "input_url": "$URL",
   "song_id": "$SONG_ID",
+  "song_title": "$SONG_TITLE_RAW",
+  "song_dir_name": "$SONG_DIR_NAME",
   "created_at": "$(date -Iseconds)",
   "assets": {
-    "audio": "${MEDIA_FILE#${ROOT_DIR}/}",
-    "subtitle_srt": "${SUB_FILE#${ROOT_DIR}/}",
-    "research": "${RES_DIR#${ROOT_DIR}/}/song_background.md",
-    "visual_plan": "${VIS_DIR#${ROOT_DIR}/}/plan.md"
+    "audio": "$MEDIA_FILE",
+    "subtitle_srt": "$SUB_FILE",
+    "research": "$RES_DIR/song_background.md",
+    "visual_plan": "$VIS_DIR/plan.md"
   }
 }
 EOF
