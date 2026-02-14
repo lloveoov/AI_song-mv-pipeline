@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+MSG_FILE="$1"
+MSG="$(head -n1 "$MSG_FILE" | tr -d '\r')"
+AUTHOR_NAME="$(git var GIT_AUTHOR_IDENT | sed -E 's/ <.*$//')"
+
+prefix="${MSG%%:*}"
+case "$prefix" in
+  manager) expected="Orion Manager" ;;
+  builder|code) expected="Orion Code" ;;
+  qa) expected="Orion QA" ;;
+  doc|docs) expected="Orion Doc" ;;
+  *) exit 0 ;;
+esac
+
+if [[ "$AUTHOR_NAME" != "$expected" ]]; then
+  echo "❌ Commit author mismatch for prefix '$prefix'" >&2
+  echo "   Expected author: $expected" >&2
+  echo "   Current author : $AUTHOR_NAME" >&2
+  echo "   Use: git commit --author=\"$expected <1560715+lloveoov@users.noreply.github.com>\" -m \"$MSG\"" >&2
+  exit 1
+fi
